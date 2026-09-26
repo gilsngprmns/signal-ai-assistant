@@ -1,0 +1,26 @@
+:root {
+  font-family: "Space Grotesk", "Bahnschrift", "Segoe UI", sans-serif;
+  color: #edf4ef;
+  background: #0a100e;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  --ink: #edf4ef;
+  --muted: #91a49a;
+  --line: #263831;
+  --paper: #101816;
+  --forest: #11352a;
+  --citrus: #c8ff45;
+  --coral: #ff765d;
+  --signal: #64e3dc;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #c8ff45; outline-offset: 3px; }
+::selection { color: #0a100e; background: #c8ff45; }
