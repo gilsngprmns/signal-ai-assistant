@@ -12,14 +12,17 @@ async function startServer() {
 
     console.log("PostgreSQL connected");
     console.log("Database time:", result.rows[0].now);
+
     if (!isGeminiConfigured()) {
-      console.warn("GEMINI_API_KEY is not configured; document processing and AI chat are unavailable");
+      console.warn(
+        "GEMINI_API_KEY is not configured; document processing and AI chat are unavailable"
+      );
     }
 
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log("=================================");
       console.log("AI Knowledge Base Backend");
-      console.log(`Server: http://localhost:${PORT}`);
+      console.log(`Server running on port ${PORT}`);
       console.log("=================================");
     });
   } catch (error) {
