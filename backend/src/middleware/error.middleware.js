@@ -37,9 +37,6 @@ export default function errorMiddleware(error, req, res, next) {
 	if (error.code === "23505") {
 		return res.status(409).json({ success: false, message: "A record with this identifier already exists" });
 	}
-	if (error.name === "MulterError") {
-		return res.status(400).json({ success: false, message: "The uploaded file could not be accepted" });
-	}
 	const clientStatus = Number.isInteger(error.statusCode)
 		? error.statusCode
 		: Number.isInteger(error.status) && error.status < 500 ? error.status : null;

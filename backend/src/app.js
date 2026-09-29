@@ -3,7 +3,6 @@ import cors from "cors";
 
 import pool from "./config/database.js";
 import authRoutes from "./routes/auth.routes.js";
-import documentRoutes from "./routes/document.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import conversationRoutes from "./routes/conversation.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
@@ -119,7 +118,6 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/documents", documentRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/admin", adminRoutes);
