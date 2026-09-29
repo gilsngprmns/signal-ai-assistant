@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
+import WaveformLogo from "./WaveformLogo.jsx";
 import "highlight.js/styles/github-dark-dimmed.css";
 
 function readCodeText(node) {
@@ -34,7 +35,7 @@ function MarkdownCode({ className = "", children, ...props }) {
 	);
 }
 
-export default function ChatMessage({ message, onRegenerate, regenerating = false }) {
+function ChatMessage({ message, onRegenerate, regenerating = false, streaming = false }) {
 	const [copied, setCopied] = useState(false);
 	const sources = Array.isArray(message.sources) ? message.sources : [];
 	const isAssistant = message.role === "assistant";
@@ -51,14 +52,19 @@ export default function ChatMessage({ message, onRegenerate, regenerating = fals
 
 	return (
 		<article className={`chat-message ${message.role}`}>
-			<div className="message-role-row"><span className="message-role">{isAssistant ? "SIGNAL" : "YOU"}</span>{isAssistant && <span className="message-model">AI ASSISTANT</span>}</div>
+			<div className="message-role-row">{isAssistant && <WaveformLogo className="message-waveform" />}<span className="message-role">{isAssistant ? "Signal AI" : "You"}</span>{isAssistant && <span className="message-model">AI</span>}</div>
 			{isAssistant ? (
-				<div className="markdown-body"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]} components={{ code: MarkdownCode }}>
+				<div className="markdown-body"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]} components={{
+					code: MarkdownCode,
+					table: ({ node, ...props }) => <div className="markdown-table-wrap"><table {...props} /></div>,
+				}}>
 					{message.content}
 				</ReactMarkdown></div>
 			) : <p className="user-message-content">{message.content}</p>}
 			{sources.length > 0 && <div className="source-list"><span className="source-heading">SOURCES</span>{sources.map((source, index) => <div className="source-item" key={`${source.documentId}-${source.chunkIndex}-${index}`}><span>{source.documentName}</span>{source.pageNumber != null && <small>Page {source.pageNumber}</small>}</div>)}</div>}
-			{isAssistant && <div className="message-actions"><button type="button" onClick={copyResponse}>{copied ? "Copied" : "Copy"}</button>{onRegenerate && <button type="button" onClick={onRegenerate} disabled={regenerating}>{regenerating ? "Retrying..." : "Regenerate"}</button>}</div>}
+			{isAssistant && !streaming && <div className="message-actions"><button type="button" onClick={copyResponse}>{copied ? "Copied" : "Copy"}</button>{onRegenerate && <button type="button" onClick={onRegenerate} disabled={regenerating}>{regenerating ? "Retrying..." : "Regenerate"}</button>}</div>}
 		</article>
 	);
 }
+
+export default memo(ChatMessage);

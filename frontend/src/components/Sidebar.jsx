@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth.js";
-import { createConversation, getConversations } from "../services/chat.service.js";
+import { createConversation, getChatConfig, getConversations } from "../services/chat.service.js";
+import WaveformLogo from "./WaveformLogo.jsx";
+import ThemeToggle from "./ThemeToggle.jsx";
 
 const modes = [
 	{ id: "general", label: "General", mark: "◌" },
@@ -14,6 +16,7 @@ export default function Sidebar({ open, onClose }) {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [conversations, setConversations] = useState([]);
+	const [defaultMode, setDefaultMode] = useState("general");
 	const [error, setError] = useState("");
 
 	const refresh = useCallback(async () => {
@@ -26,11 +29,12 @@ export default function Sidebar({ open, onClose }) {
 	}, []);
 
 	useEffect(() => { refresh(); }, [refresh, location.pathname, location.search]);
+	useEffect(() => { getChatConfig().then((config) => setDefaultMode(config.defaultMode)).catch(() => {}); }, []);
 
-	async function startChat(mode = "general") {
+	async function startChat(mode = defaultMode) {
 		try {
 			const conversation = await createConversation(mode);
-			navigate(`/chat?conversationId=${conversation.id}`);
+			navigate(`/app/chat?conversationId=${conversation.id}`);
 			onClose();
 		} catch (requestError) {
 			setError(requestError.response?.data?.message || "Could not start a chat");
@@ -45,9 +49,9 @@ export default function Sidebar({ open, onClose }) {
 	return (
 		<>
 			{open && <button className="sidebar-scrim" type="button" aria-label="Close sidebar" onClick={onClose} />}
-			<aside className={`sidebar${open ? " sidebar-open" : ""}`}>
-				<div className="brand-lockup sidebar-brand"><span className="brand-mark">S</span><span>SIGNAL <i>/</i> AI</span></div>
-				<button className="new-chat-button" type="button" onClick={() => startChat("general")}><span aria-hidden="true">＋</span> New chat</button>
+			<aside className={`sidebar${open ? " sidebar-open" : ""}`} id="user-navigation" aria-label="User navigation">
+				<div className="user-drawer-brand-row"><div className="brand-lockup sidebar-brand"><WaveformLogo /><span>Signal AI</span></div><button className="user-drawer-close" type="button" aria-label="Close navigation" onClick={onClose}>×</button></div>
+				<button className="new-chat-button" type="button" onClick={() => startChat()}><span aria-hidden="true">＋</span> New chat</button>
 				<p className="sidebar-caption">START IN A MODE</p>
 				<nav className="mode-nav" aria-label="Chat modes">
 					{modes.map((mode) => (
@@ -56,13 +60,13 @@ export default function Sidebar({ open, onClose }) {
 						</button>
 					))}
 				</nav>
-				<div className="recent-heading"><p className="sidebar-caption">RECENT CHATS</p><Link to="/history" onClick={onClose}>All</Link></div>
+				<div className="recent-heading"><p className="sidebar-caption">RECENT CHATS</p><Link to="/app/history" onClick={onClose}>All</Link></div>
 				<nav className="recent-nav" aria-label="Recent conversations">
 					{conversations.slice(0, 9).map((conversation) => (
 						<Link
 							className={`recent-chat${String(conversation.id) === new URLSearchParams(location.search).get("conversationId") ? " active" : ""}`}
 							key={conversation.id}
-							to={`/chat?conversationId=${conversation.id}`}
+							to={`/app/chat?conversationId=${conversation.id}`}
 							onClick={onClose}
 						>
 							<span className={`mode-dot mode-${conversation.mode || "general"}`} />
@@ -74,8 +78,13 @@ export default function Sidebar({ open, onClose }) {
 				{error && <p className="sidebar-error" role="status">{error}</p>}
 				<div className="sidebar-account">
 					<div className="account-avatar">{user?.name?.trim()?.[0]?.toUpperCase() || "U"}</div>
-					<div className="account-copy"><strong>{user?.name || "Account"}</strong><small>{user?.email}</small></div>
+					<Link to="/app/profile" className="account-copy" onClick={onClose}><strong>{user?.name || "Account"}</strong><small>{user?.email}</small></Link>
 					<button type="button" title="Sign out" aria-label="Sign out" onClick={signOut}>↗</button>
+				</div>
+				<div className="sidebar-drawer-tools">
+					<Link to="/app/profile" onClick={onClose}>Profile</Link>
+					<span>Appearance</span><ThemeToggle />
+					<button type="button" className="sidebar-sign-out" onClick={signOut}>Sign out</button>
 				</div>
 			</aside>
 		</>

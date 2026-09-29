@@ -6,7 +6,10 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon --watch src --watch .env --ext js,mjs,cjs,json,env src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "seed:admin": "node src/scripts/seedAdmin.js",
+    "migrate:admin": "node src/scripts/migrateAdmin.js",
+    "migrate:chat-performance": "node src/scripts/migrateChatPerformance.js"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",

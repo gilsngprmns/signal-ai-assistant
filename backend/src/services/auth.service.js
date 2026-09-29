@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { createUser, findUserByEmail, findUserById } from "../repositories/user.repository.js";
+import { createUser, findUserByEmail, findUserById, updateLastLogin } from "../repositories/user.repository.js";
 import { generateToken } from "../utils/generateToken.js";
 
 export class AuthError extends Error {
@@ -38,11 +38,16 @@ export async function login({ email, password }) {
 	if (!passwordMatches) {
 		throw new AuthError("Invalid email or password", 401);
 	}
+	if (account.status !== "active") {
+		throw new AuthError("This account is suspended", 403);
+	}
+	await updateLastLogin(account.id);
 
 	const user = {
 		id: account.id,
 		name: account.name,
 		email: account.email,
+		role: account.role,
 		created_at: account.created_at,
 	};
 
@@ -53,6 +58,9 @@ export async function getCurrentUser(id) {
 	const user = await findUserById(id);
 	if (!user) {
 		throw new AuthError("User account no longer exists", 401);
+	}
+	if (user.status !== "active") {
+		throw new AuthError("This account is suspended", 403);
 	}
 	return user;
 }

@@ -42,7 +42,7 @@ The backend keeps the existing `route -> controller -> service -> repository -> 
 
 ## Database setup
 
-For a fresh database, run migrations `001` through `006` in `backend/database/migrations/` in order. For the existing development database, apply only migrations not yet run. Migration `006_add_conversation_mode.sql` adds `conversations.mode` with a default of `general` and a constraint for `general`, `it`, and `music`.
+For a fresh database, run migrations `001` through `008` in `backend/database/migrations/` in order. For the existing development database, apply only migrations not yet run. Migration `006_add_conversation_mode.sql` adds `conversations.mode`; migration `007_admin_platform.sql` adds roles/admin records; migration `008_chat_performance.sql` adds streaming TTFT and request idempotency fields plus measured composite indexes. Both new migrations preserve existing conversation data.
 
 The prior document feature's `vector(768)` schema stays in place but is not queried by main chat. Document tables and data are not dropped.
 
@@ -56,6 +56,10 @@ Set these in `backend/.env`:
 - `JWT_SECRET`
 
 Set `VITE_API_URL=http://localhost:5000/api` in `frontend/.env`. Never expose `DATABASE_URL`, `JWT_SECRET`, or `GEMINI_API_KEY` to the frontend. `.env` files are ignored by git.
+
+For an existing database that already has migrations `001` through `006`, run `pnpm migrate:admin` and `pnpm migrate:chat-performance` from `backend/` to apply migrations `007` and `008` transactionally. Optionally set `DEFAULT_ADMIN_EMAIL` and `DEFAULT_ADMIN_PASSWORD` in `backend/.env` before seeding. For local development only, the seed defaults to `admin@demo.com` / `password`. After applying migrations, run `pnpm seed:admin` from `backend/`; it stores a bcrypt hash and can be run repeatedly.
+
+For chat performance diagnostics, set `ENABLE_PERF_LOGGING=true` in `backend/.env` and restart the backend. Streaming requests emit one `[CHAT PERF]` stage summary without private message contents; TTFT and generation duration are also available in Admin → Usage after migration 008. Optional tuning variables and bounded defaults are listed in `backend/.env.example`. `GET /health` is a lightweight database check and does not call Gemini.
 
 ## Install and run on Windows CMD
 
@@ -86,8 +90,13 @@ Protected routes require `Authorization: Bearer <token>`.
 - `GET /api/conversations`, `GET /api/conversations/:id`, `PATCH /api/conversations/:id`, `DELETE /api/conversations/:id`
 - `GET /api/conversations/:id/messages`, `POST /api/conversations/:id/messages`
 - `POST /api/conversations/:id/messages/regenerate`
+- `POST /api/conversations/:id/messages/stream` (SSE; requires `content` and a UUID `clientMessageId`; emits `start`, `chunk`, `done`, or `error`)
+- `GET /api/chat/config` (authenticated; returns the configured default mode)
+- Admin-only APIs under `/api/admin`: dashboard, users, conversations, contexts, AI settings, usage, and activity logs
 
 Valid chat modes are `general`, `it`, and `music`. Conversation ownership is checked on every read/write. `/api/health` reports PostgreSQL/Gemini and legacy vector readiness.
+
+Admin authorization re-reads role and account status from PostgreSQL for each protected request. The admin UI is under `/admin`, while the conversational app is under `/app`; admins can open the user chat from the admin sidebar. Context labels are selected by keyword matching on the latest user message (up to three labels); normal chat does not perform vector search. Gemini usage logs store provider-reported token counts only, leaving unavailable counts `NULL`. Auth and AI request endpoints have per-process in-memory rate limits.
 
 ## Test prompts
 

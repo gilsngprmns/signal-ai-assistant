@@ -78,26 +78,23 @@ export async function getConversationWithMessages(conversationId, userId) {
 	return { ...conversation, messages };
 }
 
-export async function addMessage(conversationId, role, content, sources = []) {
+export async function addMessage(conversationId, role, content, sources = [], clientMessageId = null) {
 	const normalizedSources = role === "assistant" && Array.isArray(sources) ? sources : [];
-	const client = await pool.connect();
-	try {
-		await client.query("BEGIN");
-		const result = await client.query(
-			`INSERT INTO messages (conversation_id, role, content, sources)
-			 VALUES ($1, $2, $3, $4::jsonb)
-			 RETURNING id, role, content, sources, created_at`,
-			[conversationId, role, content, JSON.stringify(normalizedSources)],
-		);
-		await client.query("UPDATE conversations SET updated_at = NOW() WHERE id = $1", [conversationId]);
-		await client.query("COMMIT");
-		return result.rows[0];
-	} catch (error) {
-		await client.query("ROLLBACK");
-		throw error;
-	} finally {
-		client.release();
-	}
+	const result = await pool.query(
+		`WITH inserted AS (
+		   INSERT INTO messages (conversation_id, role, content, sources, client_message_id)
+		   VALUES ($1, $2, $3, $4::jsonb, $5::uuid)
+		   ON CONFLICT (conversation_id, client_message_id) WHERE client_message_id IS NOT NULL DO NOTHING
+		   RETURNING id, conversation_id, role, content, sources, created_at
+		 ), touched AS (
+		   UPDATE conversations SET updated_at = NOW()
+		   WHERE id = $1 AND EXISTS (SELECT 1 FROM inserted)
+		   RETURNING id
+		 )
+		 SELECT id, role, content, sources, created_at FROM inserted`,
+		[conversationId, role, content, JSON.stringify(normalizedSources), clientMessageId],
+	);
+	return result.rows[0];
 }
 
 export async function updateMessageContent(messageId, content) {

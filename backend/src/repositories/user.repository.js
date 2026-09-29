@@ -3,7 +3,7 @@ import pool from "../config/database.js";
 export async function findUserByEmail(email) {
   const result = await pool.query(
     `
-    SELECT id, name, email, password_hash, created_at
+    SELECT id, name, email, password_hash, role, status, created_at
     FROM users
     WHERE email = $1
     LIMIT 1
@@ -17,7 +17,7 @@ export async function findUserByEmail(email) {
 export async function findUserById(id) {
   const result = await pool.query(
     `
-    SELECT id, name, email, created_at
+    SELECT id, name, email, role, status, created_at, last_login
     FROM users
     WHERE id = $1
     LIMIT 1
@@ -26,6 +26,10 @@ export async function findUserById(id) {
   );
 
   return result.rows[0];
+}
+
+export async function updateLastLogin(id) {
+  await pool.query("UPDATE users SET last_login = NOW() WHERE id = $1", [id]);
 }
 
 export async function createUser(name, email, passwordHash) {
@@ -42,6 +46,7 @@ export async function createUser(name, email, passwordHash) {
       id,
       name,
       email,
+      role,
       created_at
     `,
     [name, email, passwordHash]

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth.js";
+import WaveformLogo from "../components/WaveformLogo.jsx";
 
 export default function Register() {
 	const { user, loading, register } = useAuth();
@@ -9,7 +10,7 @@ export default function Register() {
 	const [error, setError] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 
-	if (!loading && user) return <Navigate to="/dashboard" replace />;
+	if (!loading && user) return <Navigate to={user.role === "admin" ? "/admin/dashboard" : "/app/chat"} replace />;
 
 	async function handleSubmit(event) {
 		event.preventDefault();
@@ -17,7 +18,7 @@ export default function Register() {
 		setSubmitting(true);
 		try {
 			await register(form);
-			navigate("/dashboard", { replace: true });
+			navigate("/app/chat", { replace: true });
 		} catch (requestError) {
 			setError(requestError.response?.data?.message || "Unable to create your account. Try again.");
 		} finally {
@@ -28,7 +29,7 @@ export default function Register() {
 	return (
 		<main className="auth-shell">
 			<section className="auth-aside" aria-label="Signal AI">
-				<div className="brand-lockup"><span className="brand-mark">S</span><span>SIGNAL / AI</span></div>
+				<div className="brand-lockup"><WaveformLogo /><span>Signal AI</span></div>
 				<div className="aside-copy">
 					<p className="eyebrow">A CLEARER WAY TO KNOW</p>
 					<h1>Ideas move between code and sound.</h1>
@@ -37,7 +38,7 @@ export default function Register() {
 					<div className="index-art" aria-hidden="true"><span>01</span><i /><i /><i /><b>TECH +<br />MUSIC</b></div>
 			</section>
 			<section className="auth-main">
-				<div className="mobile-brand brand-lockup"><span className="brand-mark">S</span><span>SIGNAL / AI</span></div>
+				<div className="mobile-brand brand-lockup"><WaveformLogo /><span>Signal AI</span></div>
 				<div className="auth-form-wrap">
 					<p className="eyebrow">GET STARTED</p>
 					<h2>Create your workspace</h2>

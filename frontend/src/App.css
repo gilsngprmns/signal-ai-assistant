@@ -39,6 +39,12 @@
 .workspace-content { max-width: 1000px; margin: 0 auto; padding: 84px 28px; }
 .workspace-content h1 { margin: 0 0 12px; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 42px; font-weight: 400; letter-spacing: 0; }
 .workspace-content > p:last-child { color: var(--muted); font-size: 14px; }
+.profile-panel { display: flex; align-items: center; gap: 20px; max-width: 600px; padding: 20px; border: 1px solid var(--line); background: #111b18; }
+.profile-avatar { display: grid; width: 54px; aspect-ratio: 1; flex: 0 0 54px; place-items: center; color: #101513; background: var(--signal); font-size: 22px; }
+.profile-panel dl { display: grid; flex: 1; gap: 11px; margin: 0; }
+.profile-panel dl div { display: grid; gap: 4px; }
+.profile-panel dt { color: var(--muted); font-family: var(--mono); font-size: 8px; text-transform: uppercase; }
+.profile-panel dd { margin: 0; color: var(--ink); font-size: 12px; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 236px minmax(0, 1fr); background: #f7f8f5; }
 .sidebar { position: sticky; top: 0; display: flex; height: 100vh; flex-direction: column; padding: 28px 17px 22px; color: #eef4ef; background: #174b3a; }
 .sidebar-brand { padding: 0 6px 38px; font-size: 9px; }

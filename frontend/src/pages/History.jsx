@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { deleteConversation, getConversations, updateConversation } from "../services/chat.service.js";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 export default function History() {
 	const [conversations, setConversations] = useState([]);
@@ -8,6 +9,8 @@ export default function History() {
 	const [error, setError] = useState("");
 	const [editingId, setEditingId] = useState(null);
 	const [draftTitle, setDraftTitle] = useState("");
+	const [deleteTarget, setDeleteTarget] = useState(null);
+	const [deleting, setDeleting] = useState(false);
 	const navigate = useNavigate();
 
 	const refresh = useCallback(async () => {
@@ -22,14 +25,16 @@ export default function History() {
 
 	useEffect(() => { refresh(); }, [refresh]);
 
-	async function remove(id) {
-		if (!window.confirm("Delete this conversation?")) return;
+	async function remove() {
+		if (!deleteTarget) return;
+		setDeleting(true);
 		try {
-			await deleteConversation(id);
-			setConversations((current) => current.filter((conversation) => conversation.id !== id));
+			await deleteConversation(deleteTarget.id);
+			setConversations((current) => current.filter((conversation) => conversation.id !== deleteTarget.id));
+			setDeleteTarget(null);
 		} catch (requestError) {
 			setError(requestError.response?.data?.message || "Conversation could not be deleted");
-		}
+		} finally { setDeleting(false); }
 	}
 
 	function beginRename(conversation) {
@@ -61,17 +66,19 @@ export default function History() {
 							<button type="button" onClick={() => setEditingId(null)}>Cancel</button>
 						</form>
 					) : <>
-						<button className="history-open" type="button" onClick={() => navigate(`/chat?conversationId=${conversation.id}`)}>
+						<button className="history-open" type="button" onClick={() => navigate(`/app/chat?conversationId=${conversation.id}`)}>
 							<span className={`mode-dot mode-${conversation.mode || "general"}`} />
 							<span className="history-title"><strong>{conversation.title}</strong><small>{(conversation.mode || "general").toUpperCase()} · {new Date(conversation.updated_at).toLocaleString()} · {conversation.message_count} messages</small></span>
 						</button>
 						<div className="history-actions">
 							<button className="delete-text-button" type="button" onClick={() => beginRename(conversation)} aria-label={`Rename ${conversation.title}`}>Rename</button>
-							<button className="delete-text-button" type="button" onClick={() => remove(conversation.id)} aria-label={`Delete ${conversation.title}`}>Delete</button>
+							<button className="delete-text-button" type="button" onClick={() => setDeleteTarget(conversation)} aria-label={`Delete ${conversation.title}`}>Delete</button>
 						</div>
+						<details className="history-mobile-actions"><summary aria-label={`Actions for ${conversation.title}`}>•••</summary><div><button type="button" onClick={() => beginRename(conversation)}>Rename</button><button className="danger" type="button" onClick={() => remove(conversation)}>Delete</button></div></details>
 					</>}
 				</article>
 			))}</div> : <div className="empty-state"><p>No conversations yet.</p><span>Questions you ask will appear here.</span></div>}
+			<ConfirmDialog open={Boolean(deleteTarget)} title="Delete conversation?" message={`“${deleteTarget?.title || "Conversation"}” and its messages will be permanently deleted.`} busy={deleting} onCancel={() => setDeleteTarget(null)} onConfirm={remove} />
 		</main>
 	);
 }
